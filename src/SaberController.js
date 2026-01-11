@@ -108,18 +108,21 @@ export class SaberController {
     }
 
     updatePosition(mouse) {
+        // Sauvegarder les positions précédentes AVANT le calcul
+        this.previousPositions.left.copy(this.sabers.left.position);
+        this.previousPositions.right.copy(this.sabers.right.position);
+
         // Créer un plan de jeu 3D dans l'espace
         const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(mouse, this.camera);
 
         const intersectPoint = new THREE.Vector3();
-        raycaster.ray.intersectPlane(plane, intersectPoint);
+        const hasIntersection = raycaster.ray.intersectPlane(plane, intersectPoint);
 
-        if (intersectPoint) {
-            this.previousPositions.left.copy(this.sabers.left.position);
-            this.previousPositions.right.copy(this.sabers.right.position);
-
+        // CORRECTION CRITIQUE: Toujours mettre à jour, même si pas d'intersection
+        // Utiliser la dernière position valide ou une position par défaut
+        if (hasIntersection && intersectPoint) {
             // Limiter la zone de mouvement pour garder les sabres dans le champ de vision
             const clampedX = Math.max(-4, Math.min(4, intersectPoint.x));
             const clampedY = Math.max(-2, Math.min(4, intersectPoint.y));
@@ -131,15 +134,20 @@ export class SaberController {
             // Interpolation plus rapide pour un meilleur contrôle
             this.sabers.left.position.lerp(leftTarget, 0.5);
             this.sabers.right.position.lerp(rightTarget, 0.5);
+        }
+        // Si pas d'intersection, garder la position actuelle (pas de mise à jour)
 
-            this.directions.left.subVectors(this.sabers.left.position, this.previousPositions.left);
-            this.directions.right.subVectors(this.sabers.right.position, this.previousPositions.right);
+        // Toujours calculer les directions, même si faibles
+        this.directions.left.subVectors(this.sabers.left.position, this.previousPositions.left);
+        this.directions.right.subVectors(this.sabers.right.position, this.previousPositions.right);
 
-            // Rotation basée sur le mouvement
+        // Rotation basée sur le mouvement (seulement si mouvement significatif)
+        if (this.directions.left.length() > 0.001) {
             const leftAngle = Math.atan2(this.directions.left.x, this.directions.left.y);
-            const rightAngle = Math.atan2(this.directions.right.x, this.directions.right.y);
-
             this.sabers.left.rotation.z = leftAngle;
+        }
+        if (this.directions.right.length() > 0.001) {
+            const rightAngle = Math.atan2(this.directions.right.x, this.directions.right.y);
             this.sabers.right.rotation.z = rightAngle;
         }
 
