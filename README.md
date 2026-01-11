@@ -10,62 +10,51 @@ Testez le jeu directement: [https://loricve.github.io/beatsauberR5.D07/](https:/
 
 Beat Saber est un jeu de rythme immersif où le joueur doit découper des cubes colorés au rythme de la musique, en suivant des directions précises. Cette adaptation web conserve les mécaniques de gameplay principales tout en les adaptant aux interactions souris/clavier d'un navigateur.
 
+## But du jeu
+
+Le but de BeatSaber est de frapper les cubes qui arrivent à l'écran au bon moment, en rythme avec la musique, pour marquer un maximum de points. Plus vous êtes précis, plus votre score sera élevé. Attention au cooldown entre chaque frappe !
+
 ## Fonctionnalités
 
-### Gameplay
-- Découpage de cubes colorés (rouge et bleu) avec des sabres laser virtuels
-- Système de directions (haut, bas, gauche, droite, diagonales)
-- Détection de collision précise avec raycasting
-- Système de combo et multiplicateur de score
-- Effets visuels et particules lors des impacts
+- Système de score en temps réel
+- Plusieurs modes de difficulté (débutant, avancé, expert)
+- Redémarrage de la partie sans recharger la page
+- Gestion du cooldown entre les frappes de cubes
+- Affichage des meilleurs scores
+- Effets visuels lors des frappes
+- Support clavier
 
-### Niveaux de Difficulté
-- **Débutant**: Cubes espacés, rythme lent (vitesse 0.8x)
-- **Normal**: Rythme moyen, directions variées (vitesse 1.0x)
-- **Expert**: Rythme rapide, patterns complexes (vitesse 1.3x)
-- **Expert+**: Très rapide, nombreux obstacles (vitesse 1.6x)
+## Contrôles
 
-### Système de Scoring
-- Découpe parfaite: +115 points
-- Bonne découpe: +100 points
-- Découpe correcte: +70 points
-- Cube manqué: -10 points
-- Mauvaise couleur: -20 points
-- Multiplicateurs de combo: x2, x3, x4
+- **Flèche gauche** : Frapper à gauche
+- **Flèche droite** : Frapper à droite
+- **Flèche haut** : Frapper en haut
+- **Flèche bas** : Frapper en bas
+- **Espace** : Démarrer/redémarrer la partie
+- **Entrée** : Valider une sélection/menu
 
-### Contrôles
-- **Souris**: Déplacement des sabres laser
-- **Clic gauche**: Activation du sabre gauche (bleu)
-- **Clic droit**: Activation du sabre droit (rouge)
-- **V**: Changer de vue caméra
-- **R**: Réinitialiser la position de la caméra
-- **Espace**: Pause/Reprendre
-- **Échap**: Retour au menu
+## Comment jouer
 
-### Effets Visuels
-- Environnement néon cyberpunk
-- Bloom et post-processing
-- Particules lors des découpes réussies
-- Trail effect sur les sabres laser
-- Éclairage dynamique
+1. Lancez le jeu.
+2. Sélectionnez un mode de difficulté.
+3. Utilisez les flèches du clavier pour frapper les cubes dans la direction indiquée lorsqu'ils arrivent sur la ligne cible.
+4. Essayez d'enchaîner les frappes précises pour augmenter votre score.
+5. Vous pouvez redémarrer la partie à tout moment avec **Espace**.
 
 ## Installation
 
-### Prérequis
-- Node.js (v18 ou supérieur)
-- npm ou yarn
-
-### Installation des dépendances
-
-```bash
-npm install
-```
-
-### Lancement en mode développement
-
-```bash
-npm run dev
-```
+1. Clonez le dépôt :
+   ```bash
+   git clone https://github.com/ton-utilisateur/beatsauber-R5.D07.git
+   ```
+2. Installez les dépendances si nécessaire :
+   ```bash
+   npm install
+   ```
+3. Lancez le jeu :
+   ```bash
+   npm start
+   ```
 
 Le jeu sera accessible sur [http://localhost:5173](http://localhost:5173)
 
