@@ -15,6 +15,11 @@ export class KeyboardRhythmController {
         // Animation du hit
         this.hitAnimation = { active: false, time: 0 };
 
+        // SYSTÈME ANTI-SPAM: Cooldown entre chaque frappe
+        this.leftKeyCooldown = 0;
+        this.rightKeyCooldown = 0;
+        this.keyCooldownDuration = 0.2; // 200ms entre chaque frappe (5 hits/sec max)
+
         // Références aux matériaux
         this.bladeMaterial = null;
         this.glowMaterial = null;
@@ -149,19 +154,31 @@ export class KeyboardRhythmController {
 
         // Flèche GAUCHE ou Q = Frapper les cubes ROUGES (à gauche)
         if (key === 'arrowleft' || key === 'q') {
-            if (!this.isHittingLeft) {
+            // ANTI-SPAM: Vérifier le cooldown avant d'autoriser la frappe
+            if (this.leftKeyCooldown <= 0 && !this.isHittingLeft) {
                 this.isHittingLeft = true;
+                this.leftKeyCooldown = this.keyCooldownDuration; // Démarrer le cooldown
                 this.triggerHitAnimation('left');
                 event.preventDefault();
+            } else if (this.leftKeyCooldown > 0) {
+                // Spam détecté, afficher un feedback visuel
+                console.log(`⚠️ SPAM DÉTECTÉ: Attendre ${(this.leftKeyCooldown * 1000).toFixed(0)}ms avant de frapper à gauche`);
+                this.showSpamWarning();
             }
         }
 
         // Flèche DROITE ou D = Frapper les cubes BLEUS (à droite)
         if (key === 'arrowright' || key === 'd') {
-            if (!this.isHittingRight) {
+            // ANTI-SPAM: Vérifier le cooldown avant d'autoriser la frappe
+            if (this.rightKeyCooldown <= 0 && !this.isHittingRight) {
                 this.isHittingRight = true;
+                this.rightKeyCooldown = this.keyCooldownDuration; // Démarrer le cooldown
                 this.triggerHitAnimation('right');
                 event.preventDefault();
+            } else if (this.rightKeyCooldown > 0) {
+                // Spam détecté, afficher un feedback visuel
+                console.log(`⚠️ SPAM DÉTECTÉ: Attendre ${(this.rightKeyCooldown * 1000).toFixed(0)}ms avant de frapper à droite`);
+                this.showSpamWarning();
             }
         }
     }
@@ -178,6 +195,24 @@ export class KeyboardRhythmController {
         if (key === 'arrowright' || key === 'd') {
             this.isHittingRight = false;
         }
+    }
+
+    showSpamWarning() {
+        // Flash rouge/orange sur la zone de hit pour indiquer le spam
+        const warningColor = 0xff8800; // Orange pour avertissement
+
+        // Flash très bref de la zone
+        this.hitZoneRingMaterial.color.setHex(warningColor);
+        this.hitZoneInnerRingMaterial.color.setHex(warningColor);
+        this.hitZoneRingMaterial.opacity = 0.5;
+
+        // Retour rapide à la normale
+        setTimeout(() => {
+            const normalColor = 0x0044ff;
+            this.hitZoneRingMaterial.color.setHex(normalColor);
+            this.hitZoneInnerRingMaterial.color.setHex(normalColor);
+            this.hitZoneRingMaterial.opacity = 0.3;
+        }, 100);
     }
 
     triggerHitAnimation(side) {
@@ -240,6 +275,14 @@ export class KeyboardRhythmController {
 
     update(delta) {
         const time = Date.now() * 0.001;
+
+        // ANTI-SPAM: Décrémenter les cooldowns
+        if (this.leftKeyCooldown > 0) {
+            this.leftKeyCooldown = Math.max(0, this.leftKeyCooldown - delta);
+        }
+        if (this.rightKeyCooldown > 0) {
+            this.rightKeyCooldown = Math.max(0, this.rightKeyCooldown - delta);
+        }
 
         // Pulsation légère du sabre au repos
         if (!this.hitAnimation.active) {
