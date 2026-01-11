@@ -36,8 +36,7 @@ export class GameManager {
         this.difficultySettings = {
             beginner: { speed: 0.8, spacing: 3, name: 'Débutant' },
             normal: { speed: 1.0, spacing: 2.5, name: 'Normal' },
-            expert: { speed: 1.3, spacing: 2, name: 'Expert' },
-            expertPlus: { speed: 1.6, spacing: 1.5, name: 'Expert+' }
+            expert: { speed: 1.3, spacing: 2, name: 'Expert' }
         };
 
         this.currentDifficulty = 'normal';

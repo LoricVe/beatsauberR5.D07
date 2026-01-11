@@ -127,10 +127,9 @@ export class CubeManager {
     }
 
     addDirectionArrow(cube, direction, color) {
-        // Nettoyer les flèches existantes
-        if (cube.children.length > 0) {
-            cube.children.forEach(child => cube.remove(child));
-        }
+        // Nettoyer seulement les flèches existantes (ArrowHelper), garder le glow
+        const arrowsToRemove = cube.children.filter(child => child.type === 'ArrowHelper');
+        arrowsToRemove.forEach(arrow => cube.remove(arrow));
 
         // Si pas de direction (modes Débutant/Normal), ne pas ajouter de flèche
         if (!direction || direction === 'none') return;
@@ -194,7 +193,7 @@ export class CubeManager {
                 pulseIntensity = 1.5 + Math.sin(time * 10) * 0.8; // Clignote vite
                 cube.material.emissiveIntensity = pulseIntensity;
 
-                if (cube.children[0] && cube.children[0].material.opacity !== undefined) {
+                if (cube.children[0] && cube.children[0].material && cube.children[0].material.opacity !== undefined) {
                     cube.children[0].material.opacity = 0.3 + Math.sin(time * 10) * 0.2;
                 }
 
@@ -203,7 +202,7 @@ export class CubeManager {
                 // Hors zone
                 cube.material.emissiveIntensity = pulseIntensity;
 
-                if (cube.children[0] && cube.children[0].material.opacity !== undefined) {
+                if (cube.children[0] && cube.children[0].material && cube.children[0].material.opacity !== undefined) {
                     cube.children[0].material.opacity = 0.15 + Math.sin(time) * 0.1;
                 }
 

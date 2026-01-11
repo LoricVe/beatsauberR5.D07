@@ -349,8 +349,7 @@ export class UIManager {
         const difficulties = [
             { name: 'Débutant', value: 'beginner', color: '#00ff88' },
             { name: 'Normal', value: 'normal', color: '#88ccff' },
-            { name: 'Expert', value: 'expert', color: '#ffaa00' },
-            { name: 'Expert+', value: 'expertPlus', color: '#ff0088' }
+            { name: 'Expert', value: 'expert', color: '#ffaa00' }
         ];
 
         difficulties.forEach(diff => {
