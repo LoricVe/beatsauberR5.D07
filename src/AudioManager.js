@@ -18,25 +18,26 @@ export class AudioManager {
         };
 
         // Catalogue de musiques disponibles
+        const baseUrl = import.meta.env.BASE_URL;
         this.musicLibrary = [
             {
                 id: 'music1',
                 name: 'Get Lucky',
-                file: '/music/song1.mp3',
+                file: `${baseUrl}music/song1.mp3`,
                 artist: 'Daft Punk ft. Pharrell Williams',
                 bpm: 116 // BPM suggéré (sera recalculé)
             },
             {
                 id: 'music2',
                 name: 'Memories',
-                file: '/music/song2.mp3',
+                file: `${baseUrl}music/song2.mp3`,
                 artist: 'David Guetta ft. Kid Cudi',
                 bpm: 130
             },
             {
                 id: 'music3',
                 name: 'I Love It',
-                file: '/music/song3.mp3',
+                file: `${baseUrl}music/song3.mp3`,
                 artist: 'Icona Pop ft. Charli XCX',
                 bpm: 126
             }
