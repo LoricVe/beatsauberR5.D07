@@ -498,6 +498,10 @@ export class GameManager {
         this.cubesHit = 0;
         this.cubesMissed = 0;
         this.totalCubes = 0;
+
+        // CORRECTION CRITIQUE: Réinitialiser le cooldown et le dernier cube touché
+        this.lastHitTime = 0;
+        this.lastHitCube = null;
     }
 
     updateHUD() {
