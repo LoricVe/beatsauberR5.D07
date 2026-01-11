@@ -13,10 +13,17 @@ export class CubeManager {
     }
 
     createMinimalGuides() {
-        // Grille au sol stylée
-        const gridHelper = new THREE.GridHelper(30, 30, 0x00ffff, 0x003344);
+        // Grille rectangulaire au sol (plus longue en profondeur)
+        const gridWidth = 12; // Largeur
+        const gridDepth = 50; // Profondeur (beaucoup plus long)
+        const divisionsDepth = 50; // Nombre de divisions en profondeur
+
+        const gridHelper = new THREE.GridHelper(gridDepth, divisionsDepth, 0x00ffff, 0x003344);
         gridHelper.position.y = -1;
         gridHelper.position.z = -10;
+
+        // Étirer la grille pour qu'elle soit rectangulaire (plus longue en Z)
+        gridHelper.scale.set(gridWidth / gridDepth, 1, 1);
         this.scene.add(gridHelper);
 
         // Plan de frappe subtil
@@ -43,20 +50,20 @@ export class CubeManager {
         frame.position.set(0, 1, 0);
         this.scene.add(frame);
 
-        // Lignes de profondeur subtiles
-        for (let i = 0; i < 10; i++) {
+        // Lignes de profondeur plus nombreuses et étalées
+        for (let i = 0; i < 20; i++) {
             const geometry = new THREE.BufferGeometry();
-            const z = -30 + i * 4;
+            const z = -40 + i * 3; // De -40 à +20
             const positions = new Float32Array([
-                -5, -1, z,
-                5, -1, z
+                -6, -1, z,
+                6, -1, z
             ]);
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
             const material = new THREE.LineBasicMaterial({
                 color: 0x003366,
                 transparent: true,
-                opacity: 0.2
+                opacity: 0.15 + (i * 0.01) // Opacité progressive
             });
 
             const line = new THREE.Line(geometry, material);
