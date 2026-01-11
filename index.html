@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beat Sauber - Rhythm Game</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000000;
+            color: #fff;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            background: #000000;
+        }
+
+        #canvas-container canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #000000 !important;
+        }
+
+        /* HUD EN HAUT */
+        #hud {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #score {
+            font-size: 64px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ffff 0%, #0099ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+        }
+
+        #combo {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffaa00;
+            text-shadow: 0 0 15px rgba(255, 170, 0, 0.8), 0 0 30px rgba(255, 170, 0, 0.4);
+            margin-bottom: 5px;
+        }
+
+        #multiplier {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+            margin-top: 5px;
+        }
+
+        #accuracy {
+            margin-top: 15px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #88ccff;
+            text-shadow: 0 0 10px rgba(136, 204, 255, 0.6);
+        }
+
+
+        /* PANNEAU DE CONTRÔLES - COMPACT SUR LES CÔTÉS */
+        #controls-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(0, 20, 40, 0.85) 0%, rgba(0, 10, 30, 0.9) 100%);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            box-shadow:
+                0 0 20px rgba(0, 255, 255, 0.2),
+                inset 0 0 15px rgba(0, 255, 255, 0.05);
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            max-width: 280px;
+        }
+
+        #controls-panel h3 {
+            margin: 0 0 12px 0;
+            color: #00ffff;
+            font-size: 14px;
+            font-weight: 900;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            margin: 5px 0;
+        }
+
+        .key-box {
+            background: linear-gradient(135deg, #ff0055 0%, #0055ff 100%);
+            padding: 4px 12px;
+            border-radius: 5px;
+            font-weight: 900;
+            font-size: 11px;
+            min-width: 50px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .key-box.red {
+            background: linear-gradient(135deg, #ff0055 0%, #ff3377 100%);
+            box-shadow: 0 2px 10px rgba(255, 0, 85, 0.4);
+        }
+
+        .key-box.blue {
+            background: linear-gradient(135deg, #0055ff 0%, #3377ff 100%);
+            box-shadow: 0 2px 10px rgba(0, 85, 255, 0.4);
+        }
+
+        .key-box.purple {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(118, 75, 162, 0.4);
+        }
+
+        .key-box.cyan {
+            background: linear-gradient(135deg, #00ffff 0%, #00ccff 100%);
+            box-shadow: 0 2px 10px rgba(0, 255, 255, 0.4);
+        }
+
+        .key-description {
+            color: #e0e0e0;
+            font-size: 11px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        #controls-panel.hidden {
+            display: none;
+        }
+
+        /* ÉCRAN GAME OVER */
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(0, 20, 40, 0.95) 0%, rgba(0, 10, 30, 0.98) 100%);
+            padding: 50px 70px;
+            border-radius: 30px;
+            text-align: center;
+            display: none;
+            z-index: 200;
+            border: 4px solid #00ffff;
+            box-shadow:
+                0 0 50px rgba(0, 255, 255, 0.5),
+                inset 0 0 30px rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+        }
+
+        #game-over h2 {
+            font-size: 56px;
+            font-weight: 900;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #00ffff 0%, #0099ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        #final-score {
+            font-size: 42px;
+            font-weight: 700;
+            margin: 25px 0;
+            color: #ffffff;
+        }
+
+        #final-accuracy {
+            font-size: 28px;
+            margin: 15px 0 30px 0;
+            color: #88ccff;
+        }
+
+        #rank {
+            font-size: 120px;
+            margin: 30px 0;
+            font-weight: 900;
+            text-shadow: 0 0 40px currentColor;
+            letter-spacing: 10px;
+        }
+
+        .rank-SS { color: #ffd700; text-shadow: 0 0 50px #ffd700; }
+        .rank-S { color: #ffaa00; text-shadow: 0 0 50px #ffaa00; }
+        .rank-A { color: #00ff88; text-shadow: 0 0 50px #00ff88; }
+        .rank-B { color: #88ccff; text-shadow: 0 0 50px #88ccff; }
+        .rank-C { color: #8888ff; text-shadow: 0 0 50px #8888ff; }
+        .rank-D { color: #ff8888; text-shadow: 0 0 50px #ff8888; }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 18px 45px;
+            font-size: 20px;
+            font-weight: 900;
+            cursor: pointer;
+            border-radius: 15px;
+            margin: 15px 10px;
+            transition: all 0.3s ease;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow:
+                0 5px 20px rgba(102, 126, 234, 0.4),
+                0 0 30px rgba(118, 75, 162, 0.3);
+        }
+
+        button:hover {
+            transform: scale(1.08) translateY(-3px);
+            box-shadow:
+                0 8px 30px rgba(102, 126, 234, 0.6),
+                0 0 50px rgba(118, 75, 162, 0.5);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            font-weight: 700;
+            z-index: 300;
+            color: #00ffff;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            letter-spacing: 3px;
+        }
+
+        /* ANIMATIONS */
+        @keyframes glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        #loading {
+            animation: glow 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div id="hud">
+        <div id="score">0</div>
+        <div id="combo">Combo: 0</div>
+        <div id="multiplier">x1</div>
+        <div id="accuracy">Précision: 100%</div>
+    </div>
+
+    <div id="controls-panel" class="hidden">
+        <h3>🎮 Contrôles</h3>
+        <div class="control-item">
+            <div class="key-box red">← / Q</div>
+            <div class="key-description">Cubes rouges</div>
+        </div>
+        <div class="control-item">
+            <div class="key-box blue">→ / D</div>
+            <div class="key-description">Cubes bleus</div>
+        </div>
+        <div class="control-item">
+            <div class="key-box cyan">V</div>
+            <div class="key-description">Changer caméra</div>
+        </div>
+        <div class="control-item">
+            <div class="key-box purple">P</div>
+            <div class="key-description">Pause</div>
+        </div>
+        <div class="control-item">
+            <div class="key-box purple">ÉCHAP</div>
+            <div class="key-description">Menu</div>
+        </div>
+    </div>
+
+    <div id="game-over">
+        <h2>Niveau Terminé!</h2>
+        <div id="final-score"></div>
+        <div id="final-accuracy"></div>
+        <div id="rank" class="rank-A">A</div>
+        <button id="retry-btn">Recommencer</button>
+        <button id="menu-btn">Menu Principal</button>
+    </div>
+
+    <div id="loading">Chargement...</div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

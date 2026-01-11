@@ -1,0 +1,26 @@
+{
+  "name": "beat-saber-threejs",
+  "version": "1.0.0",
+  "description": "Version web du jeu Beat Saber développée avec Three.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "threejs",
+    "beat-saber",
+    "game",
+    "3d",
+    "webgl"
+  ],
+  "author": "Loric Verrez",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  }
+}

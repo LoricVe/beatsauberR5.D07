@@ -1,0 +1,2 @@
+# Ce fichier permet de garder le dossier music/ dans Git même s'il est vide
+# Les fichiers .mp3 sont généralement exclus du dépôt Git car ils sont trop volumineux
