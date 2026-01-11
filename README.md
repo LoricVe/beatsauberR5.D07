@@ -2,6 +2,10 @@
 
 Version web du célèbre jeu de rythme Beat Saber, développée avec Three.js.
 
+## Demo en ligne
+
+Testez le jeu directement: [https://loricve.github.io/beatsauberR5.D07/](https://loricve.github.io/beatsauberR5.D07/)
+
 ## Description
 
 Beat Saber est un jeu de rythme immersif où le joueur doit découper des cubes colorés au rythme de la musique, en suivant des directions précises. Cette adaptation web conserve les mécaniques de gameplay principales tout en les adaptant aux interactions souris/clavier d'un navigateur.

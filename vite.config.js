@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: './',
+  base: '/beatsauberR5.D07/',
   server: {
     port: 5173,
     open: true
