@@ -154,6 +154,13 @@ export class KeyboardRhythmController {
     }
 
     onKeyDown(event) {
+        // BLOQUER IMMÉDIATEMENT les événements de répétition automatique du navigateur
+        if (event.repeat) {
+            console.log('⚠️ RÉPÉTITION AUTO BLOQUÉE: Relâcher et réappuyer pour frapper');
+            event.preventDefault();
+            return;
+        }
+
         const key = event.key.toLowerCase();
 
         // Flèche GAUCHE ou Q = Frapper les cubes ROUGES (à gauche)
