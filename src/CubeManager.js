@@ -13,8 +13,8 @@ export class CubeManager {
     }
 
     createMinimalGuides() {
-        // Grille rectangulaire au sol (plus longue en profondeur)
-        const gridWidth = 12; // Largeur
+        // Grille rectangulaire au sol (étroite et très longue en profondeur)
+        const gridWidth = 7; // Largeur réduite pour un couloir plus étroit
         const gridDepth = 50; // Profondeur (beaucoup plus long)
         const divisionsDepth = 50; // Nombre de divisions en profondeur
 
@@ -55,8 +55,8 @@ export class CubeManager {
             const geometry = new THREE.BufferGeometry();
             const z = -40 + i * 3; // De -40 à +20
             const positions = new Float32Array([
-                -6, -1, z,
-                6, -1, z
+                -3.5, -1, z,  // Largeur réduite pour correspondre à la grille
+                3.5, -1, z
             ]);
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
