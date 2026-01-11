@@ -254,14 +254,17 @@ export class GameManager {
                 }
 
                 // NOUVEAU: Vérifier le cooldown pour éviter de toucher plusieurs cubes à la fois
+                // CORRECTION: En mode Débutant, réduire le cooldown car les cubes sont plus espacés
+                const adjustedCooldown = this.currentDifficulty === 'beginner' ? 0.05 : this.hitCooldown;
                 const currentTime = Date.now() / 1000; // Temps en secondes
-                if (currentTime - this.lastHitTime < this.hitCooldown) {
-                    console.log(`⏱️ COOLDOWN: Trop rapide, attendre ${((this.hitCooldown - (currentTime - this.lastHitTime)) * 1000).toFixed(0)}ms`);
+                if (currentTime - this.lastHitTime < adjustedCooldown) {
+                    console.log(`⏱️ COOLDOWN: Trop rapide, attendre ${((adjustedCooldown - (currentTime - this.lastHitTime)) * 1000).toFixed(0)}ms`);
                     return;
                 }
 
                 // NOUVEAU: Vérifier que ce n'est pas un cube trop proche du dernier touché
-                if (this.lastHitCube) {
+                // CORRECTION: Désactiver cette vérification en mode Débutant car les cubes sont espacés dans le temps, pas forcément en distance
+                if (this.currentDifficulty !== 'beginner' && this.lastHitCube) {
                     const distanceFromLast = closestValidCube.position.distanceTo(this.lastHitCube.position);
                     if (distanceFromLast < 1.5) {
                         console.log(`📏 DISTANCE: Cube trop proche du dernier (${distanceFromLast.toFixed(2)}u) - IGNORÉ`);
