@@ -20,6 +20,10 @@ export class KeyboardRhythmController {
         this.rightKeyCooldown = 0;
         this.keyCooldownDuration = 0.2; // 200ms entre chaque frappe (5 hits/sec max)
 
+        // ANTI-HOLD: Empêcher de maintenir la touche enfoncée
+        this.leftKeyConsumed = false;  // True = le hit a déjà été consommé pour cette pression
+        this.rightKeyConsumed = false;
+
         // Références aux matériaux
         this.bladeMaterial = null;
         this.glowMaterial = null;
@@ -154,9 +158,17 @@ export class KeyboardRhythmController {
 
         // Flèche GAUCHE ou Q = Frapper les cubes ROUGES (à gauche)
         if (key === 'arrowleft' || key === 'q') {
+            // ANTI-HOLD: Vérifier que la touche n'a pas déjà été consommée
+            if (this.leftKeyConsumed) {
+                console.log('⚠️ HOLD DÉTECTÉ: Relâcher la touche gauche avant de frapper à nouveau');
+                event.preventDefault();
+                return;
+            }
+
             // ANTI-SPAM: Vérifier le cooldown avant d'autoriser la frappe
             if (this.leftKeyCooldown <= 0 && !this.isHittingLeft) {
                 this.isHittingLeft = true;
+                this.leftKeyConsumed = true; // Marquer comme consommée
                 this.leftKeyCooldown = this.keyCooldownDuration; // Démarrer le cooldown
                 this.triggerHitAnimation('left');
                 event.preventDefault();
@@ -169,9 +181,17 @@ export class KeyboardRhythmController {
 
         // Flèche DROITE ou D = Frapper les cubes BLEUS (à droite)
         if (key === 'arrowright' || key === 'd') {
+            // ANTI-HOLD: Vérifier que la touche n'a pas déjà été consommée
+            if (this.rightKeyConsumed) {
+                console.log('⚠️ HOLD DÉTECTÉ: Relâcher la touche droite avant de frapper à nouveau');
+                event.preventDefault();
+                return;
+            }
+
             // ANTI-SPAM: Vérifier le cooldown avant d'autoriser la frappe
             if (this.rightKeyCooldown <= 0 && !this.isHittingRight) {
                 this.isHittingRight = true;
+                this.rightKeyConsumed = true; // Marquer comme consommée
                 this.rightKeyCooldown = this.keyCooldownDuration; // Démarrer le cooldown
                 this.triggerHitAnimation('right');
                 event.preventDefault();
@@ -189,11 +209,13 @@ export class KeyboardRhythmController {
         // Reset touche gauche
         if (key === 'arrowleft' || key === 'q') {
             this.isHittingLeft = false;
+            this.leftKeyConsumed = false; // Réinitialiser le flag pour permettre la prochaine frappe
         }
 
         // Reset touche droite
         if (key === 'arrowright' || key === 'd') {
             this.isHittingRight = false;
+            this.rightKeyConsumed = false; // Réinitialiser le flag pour permettre la prochaine frappe
         }
     }
 
