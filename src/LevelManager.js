@@ -47,8 +47,7 @@ export class LevelManager {
         const patterns = {
             beginner: this.generateBeginnerPattern(),
             normal: this.generateNormalPattern(),
-            expert: this.generateExpertPattern(),
-            expertPlus: this.generateExpertPlusPattern()
+            expert: this.generateExpertPattern()
         };
 
         return patterns[difficulty] || patterns.normal;
@@ -139,35 +138,6 @@ export class LevelManager {
         }
 
         return { events, duration: 110 };
-    }
-
-    generateExpertPlusPattern() {
-        const events = [];
-        const directions = ['up', 'down', 'left', 'right', 'upLeft', 'upRight', 'downLeft', 'downRight'];
-        const colors = ['red', 'blue'];
-
-        for (let i = 0; i < 100; i++) {
-            const time = i * 0.8;
-
-            const cubeCount = 2 + Math.floor(Math.random() * 2);
-            for (let j = 0; j < cubeCount; j++) {
-                const color = colors[Math.floor(Math.random() * 2)];
-                const direction = directions[Math.floor(Math.random() * directions.length)];
-                // NOUVEAU: Cubes à gauche (rouge) ou droite (bleu)
-                const x = color === 'red' ? -2 : 2;
-                const y = 1.5;
-
-                events.push({
-                    time: time + j * 0.15,
-                    type: 'cube',
-                    color,
-                    direction,
-                    position: { x, y, z: -20 }
-                });
-            }
-        }
-
-        return { events, duration: 100 };
     }
 
     update(delta) {

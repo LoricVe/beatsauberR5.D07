@@ -52,20 +52,20 @@ export class BeatDetector {
      * Détecte les beats en analysant les pics d'énergie
      */
     detectBeats(data, sampleRate) {
-        const windowSize = 1024;
-        const hopSize = 512;
-        const threshold = 1.3; // Seuil pour considérer un pic comme un beat
+        const windowSize = 2048; // Fenêtre plus grande pour mieux capturer les basses
+        const hopSize = 441; // ~10ms hop pour meilleure résolution temporelle
+        const threshold = 1.4; // Seuil légèrement plus élevé pour éviter les faux positifs
 
         let energyHistory = [];
-        const historySize = 43; // ~1 seconde à 44100Hz avec hopSize=512
+        const historySize = 43; // ~1 seconde d'historique
 
         for (let i = 0; i < data.length - windowSize; i += hopSize) {
-            // Calculer l'énergie de la fenêtre
+            // Calculer l'énergie de la fenêtre (RMS energy)
             let energy = 0;
             for (let j = 0; j < windowSize; j++) {
                 energy += data[i + j] * data[i + j];
             }
-            energy /= windowSize;
+            energy = Math.sqrt(energy / windowSize);
 
             // Garder un historique de l'énergie
             energyHistory.push(energy);
@@ -73,15 +73,22 @@ export class BeatDetector {
                 energyHistory.shift();
             }
 
-            // Calculer l'énergie moyenne sur l'historique
+            // Calculer l'énergie moyenne et variance
             const avgEnergy = energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length;
 
-            // Si l'énergie actuelle dépasse le seuil * moyenne, c'est un beat
-            if (energy > threshold * avgEnergy && energyHistory.length === historySize) {
+            // Variance pour détecter les changements brusques
+            const variance = energyHistory.reduce((sum, e) => sum + Math.pow(e - avgEnergy, 2), 0) / energyHistory.length;
+            const stdDev = Math.sqrt(variance);
+
+            // Seuil adaptatif basé sur la moyenne et l'écart-type
+            const adaptiveThreshold = avgEnergy + (stdDev * 0.5);
+
+            // Si l'énergie actuelle dépasse le seuil adaptatif, c'est potentiellement un beat
+            if (energy > threshold * avgEnergy && energy > adaptiveThreshold && energyHistory.length === historySize) {
                 const time = (i / sampleRate);
 
-                // Éviter les doubles détections (minimum 0.1s entre deux beats)
-                if (this.beats.length === 0 || time - this.beats[this.beats.length - 1] > 0.1) {
+                // Éviter les doubles détections (minimum 0.15s entre deux beats pour BPM 400 max)
+                if (this.beats.length === 0 || time - this.beats[this.beats.length - 1] > 0.15) {
                     this.beats.push(time);
                 }
             }
@@ -92,8 +99,8 @@ export class BeatDetector {
      * Calcule le BPM moyen à partir des intervalles entre beats
      */
     calculateBPM() {
-        if (this.beats.length < 2) {
-            console.warn('Pas assez de beats détectés pour calculer le BPM');
+        if (this.beats.length < 10) {
+            console.warn('Pas assez de beats détectés pour calculer le BPM fiable');
             return;
         }
 
@@ -103,15 +110,37 @@ export class BeatDetector {
             intervals.push(this.beats[i] - this.beats[i - 1]);
         }
 
-        // Calculer l'intervalle médian (plus robuste que la moyenne)
+        // Trier et retirer les outliers (10% de chaque extrémité)
         intervals.sort((a, b) => a - b);
-        const medianInterval = intervals[Math.floor(intervals.length / 2)];
+        const trimAmount = Math.floor(intervals.length * 0.1);
+        const trimmedIntervals = intervals.slice(trimAmount, intervals.length - trimAmount);
+
+        // Calculer l'intervalle médian (plus robuste que la moyenne)
+        const medianInterval = trimmedIntervals[Math.floor(trimmedIntervals.length / 2)];
 
         // Convertir en BPM
-        this.bpm = 60 / medianInterval;
+        let calculatedBpm = 60 / medianInterval;
 
-        // Arrondir au BPM le plus proche (multiples de 5 souvent)
-        this.bpm = Math.round(this.bpm / 5) * 5;
+        // Si le BPM semble être la moitié ou le double du vrai BPM, corriger
+        // (problème fréquent avec la détection de beats)
+        const commonBPMs = [116, 120, 126, 128, 130, 140]; // BPMs communs dans la musique électronique
+        let closestBpm = calculatedBpm;
+        let minDiff = Infinity;
+
+        for (const targetBpm of commonBPMs) {
+            // Tester le BPM tel quel, divisé par 2, ou multiplié par 2
+            for (const multiplier of [0.5, 1, 2]) {
+                const testBpm = calculatedBpm * multiplier;
+                const diff = Math.abs(testBpm - targetBpm);
+                if (diff < minDiff && diff < 10) { // Tolérance de ±10 BPM
+                    minDiff = diff;
+                    closestBpm = targetBpm;
+                }
+            }
+        }
+
+        this.bpm = closestBpm;
+        console.log(`BPM brut calculé: ${calculatedBpm.toFixed(1)}, BPM ajusté: ${this.bpm}`);
     }
 
     /**
@@ -138,25 +167,46 @@ export class BeatDetector {
             return this.generateBeatGrid(duration);
         }
 
-        const grid = this.generateBeatGrid(duration);
+        // Trouver le premier beat fort pour synchroniser la grille
+        const beatInterval = 60 / this.bpm;
+        let offset = 0;
+
+        if (this.beats.length > 0) {
+            // Utiliser le premier beat détecté comme point de départ
+            offset = this.beats[0];
+        }
+
+        // Générer une grille alignée sur le premier beat
+        const grid = [];
+        for (let time = offset; time < duration; time += beatInterval) {
+            grid.push(time);
+        }
+
+        // Quantifier: pour chaque position de grille, utiliser le beat détecté le plus proche si disponible
         const quantized = [];
+        const usedBeats = new Set();
 
         for (const gridBeat of grid) {
-            // Trouver le beat détecté le plus proche
-            let closest = this.beats[0];
-            let minDist = Math.abs(gridBeat - closest);
+            let closest = null;
+            let minDist = Infinity;
 
-            for (const beat of this.beats) {
+            // Trouver le beat détecté le plus proche de cette position de grille
+            for (let i = 0; i < this.beats.length; i++) {
+                if (usedBeats.has(i)) continue; // Ne pas réutiliser un beat déjà assigné
+
+                const beat = this.beats[i];
                 const dist = Math.abs(gridBeat - beat);
-                if (dist < minDist) {
+
+                if (dist < minDist && dist < 0.1) { // Fenêtre de ±100ms
                     minDist = dist;
-                    closest = beat;
+                    closest = i;
                 }
             }
 
-            // Si le beat détecté est assez proche de la grille, l'utiliser
-            if (minDist < 0.15) {
-                quantized.push(closest);
+            // Utiliser le beat détecté ou la position de grille
+            if (closest !== null) {
+                quantized.push(this.beats[closest]);
+                usedBeats.add(closest);
             } else {
                 quantized.push(gridBeat);
             }
@@ -191,8 +241,7 @@ export class BeatDetector {
         const patterns = {
             beginner: this.generateBeginnerPattern(beatTimes, beatInterval),
             normal: this.generateNormalPattern(beatTimes, beatInterval),
-            expert: this.generateExpertPattern(beatTimes, beatInterval),
-            expertPlus: this.generateExpertPlusPattern(beatTimes, beatInterval)
+            expert: this.generateExpertPattern(beatTimes, beatInterval)
         };
 
         return patterns[difficulty] || patterns.normal;
@@ -335,78 +384,6 @@ export class BeatDetector {
                 if (i + beatOffset < beatTimes.length) {
                     const color = currentPattern.colors[j];
                     const direction = currentPattern.dirs[j];
-                    const x = color === 'red' ? -2 : 2;
-
-                    events.push({
-                        time: beatTimes[i + beatOffset],
-                        type: 'cube',
-                        color: color,
-                        direction: direction,
-                        position: { x, y: 1.5, z: -20 }
-                    });
-                }
-            }
-        }
-
-        return events;
-    }
-
-    generateExpertPlusPattern(beatTimes) {
-        const events = [];
-
-        // EXPERT+: Patterns très variés et complexes - 3 cubes tous les 5 beats
-        const patterns = [
-            // Pattern 1: Alternance avec diagonales
-            [
-                { color: 'red', dir: 'upLeft' },
-                { color: 'blue', dir: 'upRight' },
-                { color: 'red', dir: 'downLeft' }
-            ],
-            // Pattern 2: Bleu dominant avec croix
-            [
-                { color: 'blue', dir: 'up' },
-                { color: 'blue', dir: 'left' },
-                { color: 'red', dir: 'right' }
-            ],
-            // Pattern 3: Rouge dominant avec croix
-            [
-                { color: 'red', dir: 'down' },
-                { color: 'red', dir: 'right' },
-                { color: 'blue', dir: 'left' }
-            ],
-            // Pattern 4: Diagonales inversées
-            [
-                { color: 'blue', dir: 'downRight' },
-                { color: 'red', dir: 'downLeft' },
-                { color: 'blue', dir: 'upRight' }
-            ],
-            // Pattern 5: Mix rapide
-            [
-                { color: 'red', dir: 'up' },
-                { color: 'blue', dir: 'down' },
-                { color: 'red', dir: 'left' }
-            ],
-            // Pattern 6: Challenge max
-            [
-                { color: 'blue', dir: 'right' },
-                { color: 'red', dir: 'upRight' },
-                { color: 'blue', dir: 'downLeft' }
-            ]
-        ];
-
-        let patternIndex = 0;
-
-        for (let i = 0; i < beatTimes.length; i += 6) {
-            if (i >= beatTimes.length) break;
-
-            const currentPattern = patterns[patternIndex % patterns.length];
-            patternIndex++;
-
-            for (let j = 0; j < 3; j++) {
-                const beatOffset = j + (j > 0 ? 1 : 0); // 0, 2, 3 beats de spacing
-                if (i + beatOffset < beatTimes.length) {
-                    const color = currentPattern[j].color;
-                    const direction = currentPattern[j].dir;
                     const x = color === 'red' ? -2 : 2;
 
                     events.push({
